@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IGNITE ECOSYSTEM // GENESIS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="ignite-universe.css">
+
+    <style>
+        /* 1. INTRO 层设置 (保持原样) */
+        #intro-layer {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, rgba(0, 2, 5, 0.4) 0%, rgba(0, 0, 0, 0.95) 100%);
+            z-index: 99999; 
+            perspective: 1200px;
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            visibility: hidden; 
+            opacity: 0;
+        }
+
+        #intro-layer.playing {
+            visibility: visible;
+            opacity: 1;
+            animation: system-dissolve 1.0s 2.5s cubic-bezier(0.6, 0.05, 0.3, 1) forwards;
+        }
+
+        @keyframes system-dissolve { 
+            0% { opacity: 1; transform: scale(1); }
+            99% { opacity: 0; transform: scale(1.1); visibility: visible; } 
+            100% { opacity: 0; transform: scale(1.1); visibility: hidden; display: none; } 
+        }
+
+        /* 2. 组件样式 (保持原样) */
+        .intro-gpu { transform: translateZ(0); will-change: opacity, transform; }
+
+        .intro-grid {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 150px 150px;
+            mask-image: radial-gradient(circle at center, transparent 20%, black 90%);
+            z-index: 2; pointer-events: none;
+        }
+
+        .reactor-core {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 460px; height: 460px; z-index: 10;
+            opacity: 0; transition: opacity 0.8s ease-out; 
+        }
+
+        .ring { position: absolute; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .ring-1 { width: 440px; height: 440px; border: 1px dashed rgba(255, 255, 255, 0.1); animation: spin 90s linear infinite; }
+        .ring-2 { 
+            width: 340px; height: 340px; 
+            border-top: 1px solid #aeeeff; border-bottom: 1px solid #aeeeff;
+            border-left: 1px solid transparent; border-right: 1px solid transparent;
+            animation: spin-rev 18s linear infinite; 
+            box-shadow: 0 0 20px rgba(174, 238, 255, 0.25); 
+        }
+        .ring-3 { width: 280px; height: 280px; border: 1px solid rgba(255, 255, 255, 0.15); }
+        
+        #holo-canvas {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 240px; height: 240px; z-index: 15; mix-blend-mode: screen;
+        }
+
+        @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes spin-rev { 0% { transform: translate(-50%, -50%) rotate(360deg); } 100% { transform: translate(-50%, -50%) rotate(0deg); } }
+
+        /* HUD 面板 (保持原样) */
+        .hud-panel {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 8px;
+            opacity: 0; transition: all 0.8s ease 0.1s; 
+            z-index: 20; height: 160px; justify-content: center;
+        }
+        .hud-left { left: 5%; text-align: right; padding-right: 30px; border-right: 1px solid rgba(174, 238, 255, 0.15); }
+        .hud-right { right: 5%; text-align: left; padding-left: 30px; border-left: 1px solid rgba(174, 238, 255, 0.15); width: 260px; }
+        
+        .data-row {
+            font-family: 'Share Tech Mono', monospace; font-size: 12px; 
+            color: rgba(255, 255, 255, 0.6); letter-spacing: 1px; height: 22px; 
+            display: flex; align-items: center;
+        }
+        .hud-left .data-row { justify-content: flex-end; }
+        .data-label { color: #aeeeff; margin: 0 10px; font-weight: 600; font-family: 'Rajdhani', sans-serif; text-shadow: 0 0 5px rgba(174, 238, 255, 0.3); }
+        .data-val { color: #fff; font-weight: 500; }
+
+        /* 中间文字 (保持原样) */
+        .center-stage {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 50; text-align: center; width: 100%; pointer-events: none;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .title-group {
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            opacity: 0; filter: blur(15px); transform: scale(1.1) translateY(30px);
+            transition: all 1s cubic-bezier(0.2, 0.6, 0.35, 1);
+        }
+        .title-group.active { opacity: 1; filter: blur(0); transform: scale(1) translateY(0); }
+
+        .intro-title-en {
+            font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 4.5rem; 
+            letter-spacing: 12px; line-height: 1; color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7), 0 0 20px rgba(174, 238, 255, 0.4);
+            margin: 0;
+        }
+        .intro-title-cn {
+            font-family: 'Noto Sans SC', sans-serif; font-weight: 400; font-size: 2rem; 
+            letter-spacing: 25px; color: #d0e8ff; opacity: 0.9; margin: 8px 0 0 0; padding-left: 25px;
+            text-shadow: 0 0 15px rgba(174, 238, 255, 0.3);
+        }
+
+        .founder-name {
+            margin-top: 55px; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 1.5rem;
+            letter-spacing: 8px; color: #fff; text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+            opacity: 0; transform: translateY(15px); transition: all 0.8s ease 0.4s;
+            display: flex; align-items: center; justify-content: center; gap: 15px;
+        }
+        .founder-name.active { opacity: 1; transform: translateY(0); }
+        .role-tag { font-family: 'Share Tech Mono'; font-size: 11px; color: #aeeeff; letter-spacing: 2px; opacity: 0.8; }
+
+        .sys-active .reactor-core { opacity: 1; }
+        .sys-active .hud-panel { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .intro-title-en { font-size: 2.8rem; letter-spacing: 6px; }
+            .intro-title-cn { font-size: 1.5rem; letter-spacing: 10px; padding-left: 10px; }
+            .hud-panel { display: none; }
+            .reactor-core { transform: translate(-50%, -50%) scale(0.8); }
+        }
+
+        /* --- [新增样式开始] --- */
+        
+        /* 1. 中文标语样式 (保持原有字体风格) */
+        .vision-sub-cn {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 1.4rem; font-weight: 300;
+            color: #d0e8ff; letter-spacing: 5px;
+            margin-top: 15px; opacity: 0.8;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        }
+
+        /* 2. 语言切换按钮样式 */
+        .lang-btn {
+            font-family: 'Share Tech Mono'; font-size: 12px; color: rgba(255,255,255,0.6);
+            margin-left: 20px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2);
+            padding: 5px 10px; transition: 0.3s;
+        }
+        .lang-btn:hover { color: #fff; border-color: #00f3ff; text-shadow: 0 0 5px #00f3ff; }
+
+        /* 3. 登录弹窗样式 (完全复用原有HUD风格) */
+        #login-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 5, 10, 0.8); backdrop-filter: blur(10px);
+            z-index: 5000;
+            display: none; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.5s ease;
+        }
+        #login-modal.active { opacity: 1; }
+
+        .login-card {
+            width: 360px; padding: 40px;
+            background: rgba(10, 15, 25, 0.9);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+            position: relative;
+            /* 保持原有的科技切角 */
+            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+        }
+        .login-title { font-family: 'Rajdhani'; font-weight: 700; font-size: 20px; color: #fff; letter-spacing: 2px; margin-bottom: 20px; text-align: center; }
+        .login-input {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 12px; margin-bottom: 15px; outline: none;
+            font-family: 'Share Tech Mono'; font-size: 14px;
+        }
+        .login-input:focus { border-color: #00f3ff; background: rgba(0,243,255,0.05); }
+        .confirm-btn {
+            width: 100%; padding: 12px; background: #00f3ff; border: none;
+            font-family: 'Rajdhani'; font-weight: 700; font-size: 16px; letter-spacing: 2px;
+            cursor: pointer; transition: 0.3s;
+        }
+        .confirm-btn:hover { background: #fff; box-shadow: 0 0 20px #00f3ff; }
+        .close-login { position: absolute; top: 15px; right: 15px; color: #666; cursor: pointer; font-size: 20px; }
+        .close-login:hover { color: #fff; }
+
+        /* --- [新增样式结束] --- */
+    </style>
+</head>
+
+<body>
+
+    <!-- Intro Layer (保持原样) -->
+    <div id="intro-layer" class="intro-gpu">
+        <div class="intro-grid"></div>
+        <div class="reactor-core intro-gpu">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="ring ring-3"></div>
+            <canvas id="holo-canvas"></canvas>
+        </div>
+        <div class="hud-panel hud-left intro-gpu">
+            <div class="data-row"><span class="data-label">SYS.ID</span> <span class="data-val" id="d-id">INITIALIZING</span></div>
+            <div class="data-row"><span class="data-label">MATH.π</span> <span class="data-val">3.14159</span></div>
+            <div class="data-row"><span class="data-label">LATENCY</span> <span class="data-val" id="d-ping">1ms</span></div>
+            <div class="data-row" style="opacity:0.4; margin-top:5px; font-size:11px;">// SECURE BOOT</div>
+        </div>
+        <div class="hud-panel hud-right intro-gpu">
+            <div class="data-row"><span class="data-label">MODULE</span> <span class="data-val">IGNITE_CORE</span></div>
+            <div class="data-row"><span class="data-label">STATUS</span> <span class="data-val" style="color:#aeeeff">OPTIMAL</span></div>
+            <div class="data-row"><span class="data-label">TARGET</span> <span class="data-val">GLOBAL</span></div>
+            <div class="data-row" style="opacity:0.4; margin-top:5px; font-size:11px;">// DATA LINKED</div>
+        </div>
+        <div class="center-stage intro-gpu">
+            <div class="title-group" id="intro-title-group">
+                <h1 class="intro-title-en">IGNITE ECOSYSTEM</h1>
+                <h2 class="intro-title-cn">智火生态</h2>
+            </div>
+            <div class="founder-name" id="intro-founder">
+                <span class="role-tag">FOUNDER</span>
+                DANNY CAO / 曹奂东
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="galaxy-container">
+        <canvas id="starfield"></canvas>
+        <div class="void-overlay"></div>
+        <div class="horizon-glow"></div>
+        <div class="top-glow"></div>
+    </div>
+
+    <nav class="cosmic-nav">
+        <div class="nav-left">
+            <div class="brand-wrapper">
+                <div class="eco-logo">IGNITE <span class="highlight">ECOSYSTEM</span></div>
+                <div class="eco-slogan" id="nav-slogan">RE-INVENTING EDUCATION WITH THE NEXT GENERATION</div>
+            </div>
+        </div>
+        
+        <div class="nav-right">
+            <a href="#" class="cosmic-link" id="nav-story">STORY</a>
+            <a href="#" class="cosmic-link" id="nav-team">FELLOW TEAMS</a>
+            <a href="#" class="cosmic-link highlight-btn" id="nav-join">JOIN US</a>
+            <!-- 新增：语言切换按钮 -->
+            <div class="lang-btn" onclick="toggleLang()">[ EN / CN ]</div>
+        </div>
+    </nav>
+
+    <main class="deep-space-stage">
+        
+        <div class="vision-container">
+            <h1 class="vision-main">
+                TEACHER IS AN <span class="highlight-identity">IDENTITY</span>,<br>
+                NOT A PROFESSION.
+            </h1>
+            
+            <!-- 新增：中文标语 -->
+            <h2 class="vision-sub-cn">把教书这项“特权”归还给每个少年</h2>
+
+            <p class="vision-desc" id="vision-desc">
+                We are not building a school.<br>
+                We are building the infrastructure for a global student teaching network.
+            </p>
+        </div>
+
+        <div class="warp-gate-container">
+            <!-- 修改：点击触发登录 -->
+            <button class="enter-btn" id="enter-btn" onclick="openLogin()">
+                <span class="btn-content">ENTER ECOSYSTEM</span>
+                <div class="btn-ripple"></div>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- 新增：登录弹窗 -->
+    <div id="login-modal">
+        <div class="login-card">
+            <div class="close-login" onclick="closeLogin()">×</div>
+            <div class="login-title">IDENTITY VERIFICATION</div>
+            <input type="text" class="login-input" placeholder="AGENT ID / EMAIL">
+            <input type="password" class="login-input" placeholder="PASSCODE">
+            <button class="confirm-btn" onclick="verifyAndWarp()">ACCESS SYSTEM</button>
+        </div>
+    </div>
+
+    <footer class="deep-footer">
+        <div class="footer-meta">
+            <div class="meta-item">
+                <span class="label">YEAR</span>
+                <span class="value">2025</span>
+            </div>
+            <div class="meta-sep"></div>
+            <div class="meta-item">
+                <span class="label">VERSION</span>
+                <span class="value">GENESIS V2.1</span>
+            </div>
+            <div class="meta-sep"></div>
+            <div class="meta-item design-credit">
+                <span class="label" id="footer-label">DESIGNED BY</span>
+                <span class="value">HUANDONG CAO</span>
+            </div>
+        </div>
+    </footer>
+
+
+    <script>
+        // Intro JS Logic (完全保持原样)
+        (function() {
+            const hasSeenIntro = localStorage.getItem('ignite_genesis_visited');
+            const introLayer = document.getElementById('intro-layer');
+            if (hasSeenIntro) {
+                introLayer.style.display = 'none';
+                document.body.classList.remove('loading-state');
+                return;
+            } else {
+                document.body.classList.add('loading-state');
+                introLayer.classList.add('playing');
+            }
+            const canvas = document.getElementById('holo-canvas');
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = 240 * dpr; canvas.height = 240 * dpr;
+            ctx.scale(dpr, dpr);
+            let points = []; 
+            const numPoints = 50;
+            for(let i=0; i<numPoints; i++) {
+                const theta = Math.acos( -1 + ( 2 * i ) / numPoints );
+                const phi = Math.sqrt( numPoints * Math.PI ) * theta;
+                points.push({ x: 95 * Math.cos(phi) * Math.sin(theta), y: 95 * Math.sin(phi) * Math.sin(theta), z: 95 * Math.cos(theta) });
+            }
+            let angle = 0;
+            function drawSphere() {
+                if(introLayer.style.display === 'none') return;
+                ctx.clearRect(0, 0, 240, 240); ctx.fillStyle = '#aeeeff'; ctx.strokeStyle = 'rgba(174, 238, 255, 0.15)';
+                angle += 0.008; ctx.beginPath();
+                const ca = Math.cos(angle); const sa = Math.sin(angle);
+                for (let i = 0; i < points.length; i++) {
+                    let p = points[i];
+                    let x = p.x * ca - p.z * sa;
+                    let z = p.x * sa + p.z * ca;
+                    let y = p.y;
+                    let scale = 250 / (250 + z); 
+                    let px = 120 + x * scale; let py = 120 + y * scale;
+                    ctx.moveTo(px, py); ctx.arc(px, py, 1.3 * scale, 0, Math.PI * 2);
+                    for(let j=i+1; j<points.length; j++) {
+                        let p2 = points[j];
+                        let dx = p.x-p2.x; let dy = p.y-p2.y; let dz = p.z-p2.z;
+                        if((dx*dx + dy*dy + dz*dz) < 800) {
+                            let x2 = p2.x * ca - p2.z * sa;
+                            let z2 = p2.x * sa + p2.z * ca;
+                            let scale2 = 250 / (250 + z2);
+                            ctx.moveTo(px, py); ctx.lineTo(120 + x2 * scale2, 120 + p2.y * scale2);
+                        }
+                    }
+                }
+                ctx.fill(); ctx.stroke();
+                requestAnimationFrame(drawSphere);
+            }
+            drawSphere();
+            const titleGroup = document.getElementById('intro-title-group');
+            const founder = document.getElementById('intro-founder');
+            setTimeout(() => introLayer.classList.add('sys-active'), 100);
+            setTimeout(() => { titleGroup.classList.add('active'); founder.classList.add('active'); }, 500);
+            let interval = setInterval(() => {
+                if(introLayer.style.display === 'none') { clearInterval(interval); return; }
+                document.getElementById('d-id').innerText = "SYS-" + Math.floor(Math.random() * 9000 + 1000);
+                document.getElementById('d-ping').innerText = (Math.random() * 1.5).toFixed(1) + "ms";
+            }, 300);
+            setTimeout(() => {
+                localStorage.setItem('ignite_genesis_visited', 'true');
+                introLayer.style.display = 'none'; 
+                document.body.classList.remove('loading-state');
+            }, 3500);
+        })();
+
+        // --- 星空背景逻辑 (保持原样) ---
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let bgStars = [];      
+        let subjectNodes = []; 
+        const subjectsConfig = [ { name: "MATH", x: 0.15, y: 0.25 }, { name: "PHYSICS", x: 0.85, y: 0.22 }, { name: "BIOLOGY", x: 0.12, y: 0.75 }, { name: "ARTS", x: 0.88, y: 0.72 }, { name: "CS", x: 0.5, y: 0.88 } ];
+        const config = { starCount: 90, connDist: 150, baseColor: '210, 240, 255' };
+        function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; initWorld(); }
+        function initWorld() { bgStars = []; subjectNodes = []; subjectsConfig.forEach(sub => { subjectNodes.push({ text: sub.name, baseX: sub.x * width, baseY: sub.y * height, x: sub.x * width, y: sub.y * height, phase: Math.random() * Math.PI * 2 }); }); for(let i = 0; i < config.starCount; i++) { bgStars.push({ x: Math.random() * width, y: Math.random() * height, vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2, size: Math.random() * 1.5 + 0.5, alpha: Math.random() * 0.6 + 0.2 }); } }
+        window.addEventListener('resize', resize); resize();
+        function animate() { ctx.clearRect(0, 0, width, height); const time = Date.now() * 0.001; ctx.fillStyle = `rgba(${config.baseColor}, 0.7)`; ctx.strokeStyle = `rgba(${config.baseColor}, 0.08)`; ctx.lineWidth = 0.5; bgStars.forEach(star => { star.x += star.vx; star.y += star.vy; if(star.x < 0) star.x = width; if(star.x > width) star.x = 0; if(star.y < 0) star.y = height; if(star.y > height) star.y = 0; }); for (let i = 0; i < bgStars.length; i++) { const star = bgStars[i]; ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI*2); ctx.fill(); for (let j = i + 1; j < bgStars.length; j++) { const other = bgStars[j]; const dx = star.x - other.x; const dy = star.y - other.y; if (Math.abs(dx) > config.connDist || Math.abs(dy) > config.connDist) continue; const dist = Math.sqrt(dx*dx + dy*dy); if (dist < config.connDist) { ctx.beginPath(); ctx.moveTo(star.x, star.y); ctx.lineTo(other.x, other.y); ctx.stroke(); } } } ctx.textAlign = 'center'; subjectNodes.forEach(node => { node.x = node.baseX + Math.sin(time + node.phase) * 12; node.y = node.baseY + Math.cos(time * 0.9 + node.phase) * 12; bgStars.forEach(star => { const dx = node.x - star.x; const dy = node.y - star.y; if (Math.abs(dx) > 180 || Math.abs(dy) > 180) return; const dist = Math.sqrt(dx*dx + dy*dy); if(dist < 180) { ctx.beginPath(); const alpha = 1 - dist/180; ctx.strokeStyle = `rgba(0, 243, 255, ${alpha * 0.25})`; ctx.lineWidth = 0.8; ctx.moveTo(node.x, node.y); ctx.lineTo(star.x, star.y); ctx.stroke(); } }); const pulse = (Math.sin(time * 1.5 + node.phase) + 1) / 2; const glowSize = 6 + pulse * 10; const gradient = ctx.createRadialGradient(node.x, node.y, 1, node.x, node.y, glowSize); gradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); gradient.addColorStop(0.3, 'rgba(0, 243, 255, 0.7)'); gradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(node.x, node.y, glowSize, 0, Math.PI*2); ctx.fill(); ctx.font = '600 12px "Rajdhani"'; ctx.fillStyle = '#fff'; ctx.shadowBlur = 0; const labelY = node.y + 24; ctx.fillText(node.text, node.x, labelY); const textWidth = ctx.measureText(node.text).width; ctx.beginPath(); ctx.strokeStyle = 'rgba(0, 243, 255, 0.6)'; ctx.lineWidth = 1; ctx.moveTo(node.x - textWidth/2 - 2, labelY + 4); ctx.lineTo(node.x + textWidth/2 + 2, labelY + 4); ctx.stroke(); ctx.beginPath(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.moveTo(node.x, node.y + 5); ctx.lineTo(node.x, labelY - 12); ctx.stroke(); }); requestAnimationFrame(animate); }
+        animate();
+
+        // ================= 新增逻辑 =================
+
+        // 1. 语言切换
+        let isCN = false;
+        function toggleLang() {
+            isCN = !isCN;
+            if(isCN) {
+                document.getElementById('nav-slogan').innerText = "重塑未来教育";
+                document.getElementById('nav-story').innerText = "品牌故事";
+                document.getElementById('nav-team').innerText = "团队成员";
+                document.getElementById('nav-join').innerText = "加入我们";
+                document.getElementById('vision-desc').innerHTML = "我们不只是建立一所学校。<br>我们正在构建全球学生互助教学网络的基础设施。";
+                document.querySelector('.enter-btn span').innerText = "进入系统";
+                document.getElementById('footer-label').innerText = "设计者";
+            } else {
+                document.getElementById('nav-slogan').innerText = "RE-INVENTING EDUCATION WITH THE NEXT GENERATION";
+                document.getElementById('nav-story').innerText = "STORY";
+                document.getElementById('nav-team').innerText = "FELLOW TEAMS";
+                document.getElementById('nav-join').innerText = "JOIN US";
+                document.getElementById('vision-desc').innerHTML = "We are not building a school.<br>We are building the infrastructure for a global student teaching network.";
+                document.querySelector('.enter-btn span').innerText = "ENTER ECOSYSTEM";
+                document.getElementById('footer-label').innerText = "DESIGNED BY";
+            }
+        }
+
+        // 2. 登录弹窗控制
+        const loginModal = document.getElementById('login-modal');
+        
+        function openLogin() {
+            loginModal.style.display = 'flex';
+            setTimeout(() => loginModal.classList.add('active'), 10);
+        }
+
+        function closeLogin() {
+            loginModal.classList.remove('active');
+            setTimeout(() => loginModal.style.display = 'none', 500);
+        }
+
+        // 3. 登录并跃迁
+        function verifyAndWarp() {
+            const btn = document.querySelector('.confirm-btn');
+            btn.innerText = "VERIFYING...";
+            btn.style.background = "#fff"; btn.style.color = "#000";
+
+            setTimeout(() => {
+                btn.innerText = "ACCESS GRANTED";
+                btn.style.background = "#00ff88";
+                
+                // 关闭弹窗并开始跃迁
+                setTimeout(() => {
+                    closeLogin();
+                    warpSpeed();
+                }, 600);
+            }, 1000);
+        }
+
+        function warpSpeed() {
+            const stage = document.querySelector('.deep-space-stage');
+            
+            document.body.style.transition = "opacity 1.5s ease";
+            document.body.style.opacity = "0";
+            
+            stage.style.transition = "transform 2s cubic-bezier(0.6, 0, 0.2, 1)";
+            stage.style.transform = "scale(4) translateY(-50px)"; 
+
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 1500); 
+        }
+    </script>
+</body>
+</html>

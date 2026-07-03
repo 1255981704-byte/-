@@ -1,0 +1,241 @@
+/* --- IGNITE DEEP UNIVERSE [V3.7 - PLASMA EDITION] --- */
+
+:root {
+    --void-bg: #000205;
+    /* 核心等离子蓝 (Identity 专用) - 更锐利，偏青色 */
+    --plasma-blue: #00f3ff; 
+    --plasma-glow: rgba(0, 243, 255, 0.6);
+    
+    /* 常规 UI 蓝光 - 偏柔和 */
+    --ui-glow-blue: #aeeeff; 
+    
+    --font-head: 'Rajdhani', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-body: 'Noto Sans SC', sans-serif;
+}
+
+body {
+    margin: 0; padding: 0;
+    background-color: var(--void-bg);
+    color: #fff;
+    font-family: var(--font-head);
+    overflow: hidden;
+    height: 100vh; width: 100vw;
+}
+
+/* --- 1. 开场动画 --- */
+#intro-curtain {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    z-index: 9999;
+    pointer-events: none;
+    transition: opacity 3s ease-in-out;
+    opacity: 0;
+}
+body.loading-state #intro-curtain { opacity: 1; }
+body.loading-state .vision-main, 
+body.loading-state .vision-desc,
+body.loading-state .warp-gate-container,
+body.loading-state .cosmic-nav,
+body.loading-state .deep-footer {
+    opacity: 0; transform: translateY(20px);
+}
+body.loading-state .horizon-glow { opacity: 0; transform: scaleX(0.5); }
+
+
+/* --- 2. 背景增强 --- */
+#galaxy-container {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+    background: radial-gradient(circle at 50% 60%, #0d1a2d 0%, #000205 70%);
+}
+.void-overlay {
+    position: absolute; inset: 0;
+    background: radial-gradient(transparent 10%, #000 120%);
+}
+.horizon-glow {
+    position: absolute; bottom: -10%; left: 0; width: 100%; height: 50%;
+    /* 增强：更亮一点的蓝色辉光 */
+    background: radial-gradient(ellipse at center, rgba(0, 100, 255, 0.25) 0%, transparent 60%);
+    filter: blur(80px); opacity: 1; transition: all 4s ease-out;
+}
+.top-glow {
+    position: absolute; top: -20%; left: 0; width: 100%; height: 40%;
+    background: radial-gradient(ellipse at center, rgba(174, 238, 255, 0.1) 0%, transparent 70%);
+    filter: blur(100px); pointer-events: none;
+}
+
+/* --- 3. 导航栏 --- */
+.cosmic-nav {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 60px; 
+    z-index: 100;
+    box-sizing: border-box; 
+    transition: opacity 1.5s ease 1s, transform 1.5s ease 1s;
+}
+
+.eco-logo {
+    font-family: var(--font-head);
+    font-size: 28px; 
+    font-weight: 800;
+    letter-spacing: 4px; 
+    color: #fff; 
+    text-shadow: 
+        0 0 10px rgba(255, 255, 255, 0.9),
+        0 0 20px rgba(0, 132, 255, 0.6);
+}
+.eco-logo .highlight { 
+    color: #fff; 
+    font-weight: 800;
+} 
+
+.eco-slogan {
+    font-family: var(--font-mono); 
+    font-size: 11px; 
+    font-weight: 700;
+    color: #fff; 
+    text-shadow: 0 0 8px rgba(0, 132, 255, 0.5);
+    letter-spacing: 2px; 
+    margin-top: 6px; 
+    display: block;
+}
+
+.nav-right { display: flex; gap: 40px; align-items: center; }
+
+.cosmic-link {
+    text-decoration: none; color: #8892b0;
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.5px;
+    transition: 0.4s;
+}
+.cosmic-link:hover { color: #fff; text-shadow: 0 0 10px #fff; }
+
+.highlight-btn {
+    border: 1px solid rgba(255, 255, 255, 0.3); 
+    padding: 8px 18px; 
+    border-radius: 2px;
+    color: #fff;
+    font-weight: 600;
+}
+.highlight-btn:hover { 
+    background: rgba(255, 255, 255, 0.1); 
+    border-color: #fff; 
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+/* --- 4. 核心舞台 --- */
+.deep-space-stage {
+    position: relative; height: 100%; width: 100%;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 10;
+}
+
+.vision-container { text-align: center; margin-bottom: 50px; }
+
+.vision-main {
+    font-size: 72px; 
+    font-weight: 700;
+    line-height: 1.1; margin: 0;
+    letter-spacing: 6px; 
+    color: #fff; 
+    transition: opacity 2s ease 0.5s, transform 2s ease 0.5s;
+    text-shadow: 
+        0 0 15px rgba(255, 255, 255, 0.6),
+        0 0 30px rgba(0, 110, 255, 0.4);
+}
+
+.highlight-identity {
+    font-weight: 800; 
+    color: #fff;
+    /* IDENTITY 独有设计：等离子电弧蓝 */
+    text-shadow: 
+        0 0 10px #fff,
+        0 0 20px var(--plasma-blue),
+        0 0 40px var(--plasma-blue),
+        0 0 80px rgba(0, 243, 255, 0.4);
+}
+
+.vision-desc {
+    font-family: var(--font-body); color: #8892b0; 
+    font-size: 14px; margin-top: 30px; line-height: 1.8; letter-spacing: 1px;
+    max-width: 600px; margin-left: auto; margin-right: auto;
+    transition: opacity 2s ease 1s, transform 2s ease 1s;
+}
+
+/* --- 5. 入口按钮 --- */
+.warp-gate-container {
+    transition: opacity 2s ease 1.5s, transform 2s ease 1.5s;
+}
+
+.enter-btn {
+    position: relative;
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 30px 90px; 
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.enter-btn::before {
+    content:''; position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
+    background: linear-gradient(90deg, transparent, #fff, transparent);
+    transform: scaleX(0.5); transition: transform 0.6s;
+}
+.enter-btn:hover::before { transform: scaleX(1); background: linear-gradient(90deg, transparent, var(--plasma-blue), transparent); }
+
+.btn-content {
+    font-family: var(--font-head); font-weight: 700; 
+    font-size: 18px; 
+    letter-spacing: 6px;
+    position: relative; z-index: 2;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.btn-ripple {
+    position: absolute; top: 50%; left: 50%; width: 0; height: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    transition: width 0.6s, height 0.6s;
+    pointer-events: none;
+}
+.enter-btn:hover .btn-ripple { width: 450px; height: 450px; opacity: 0.5; }
+.enter-btn:hover { letter-spacing: 9px; text-shadow: 0 0 15px #fff; }
+
+
+/* --- 6. 底部数据栏 --- */
+.deep-footer {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 80px;
+    display: flex; justify-content: center; align-items: center;
+    background: linear-gradient(to top, #000, transparent);
+    transition: opacity 2s ease 2s;
+}
+
+.footer-meta {
+    display: flex; align-items: center; gap: 40px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 15px;
+}
+
+.meta-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px;
+}
+
+.meta-item .label {
+    font-family: var(--font-mono); font-size: 9px; color: #445060; letter-spacing: 2px;
+}
+
+.meta-item .value {
+    font-family: var(--font-head); font-weight: 500; font-size: 14px; color: #8892b0; letter-spacing: 1px;
+}
+.design-credit .value { color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+.meta-sep { width: 1px; height: 15px; background: rgba(255,255,255,0.05); }
+
+@media (max-width: 768px) {
+    .vision-main { font-size: 36px; letter-spacing: 2px; }
+    .cosmic-nav { padding: 0 20px; flex-direction: column; height: auto; padding-top: 20px;}
+    .nav-right { display: none; }
+    .deep-footer { height: auto; padding-bottom: 20px; }
+}

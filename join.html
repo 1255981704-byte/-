@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IGNITE: JOIN THE CORE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* ================= 核心变量 ================= */
+        :root {
+            --primary: #00f3ff;
+            --secondary: #0077ff;
+            --accent: #ffaa00;
+            --bg-deep: #000510;
+            --border: rgba(0, 243, 255, 0.2);
+            --text-main: #e0e6ed;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            /* 移除之前的静态背景，交给 Canvas 接管 */
+        }
+
+        /* ================= 动态星空背景 (移植自 Index) ================= */
+        #galaxy-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; /* 置于底层 */
+            background: radial-gradient(circle at 50% 50%, #0b1019 0%, #000510 100%);
+        }
+        .void-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 120%, rgba(0, 119, 255, 0.15), transparent 60%);
+            pointer-events: none;
+        }
+        .horizon-glow {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 300px;
+            background: linear-gradient(to top, rgba(0, 243, 255, 0.05), transparent);
+            pointer-events: none;
+        }
+
+        /* --- 导航栏 --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px; border-bottom: 1px solid var(--border);
+            background: rgba(0, 5, 10, 0.8); backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .brand { font-weight: 800; font-size: 24px; color: #fff; letter-spacing: 2px; }
+        .brand span { color: var(--primary); }
+        .back-btn {
+            font-family: 'Share Tech Mono'; color: var(--secondary); text-decoration: none;
+            border: 1px solid rgba(0, 119, 255, 0.3); padding: 8px 16px; transition: 0.3s;
+            font-size: 12px; letter-spacing: 1px;
+        }
+        .back-btn:hover { background: rgba(0, 119, 255, 0.1); color: #fff; border-color: var(--primary); }
+
+        /* --- Hero 区域 --- */
+        .hero-section {
+            text-align: center; padding: 80px 20px 60px;
+            animation: fadeIn 1s ease; position: relative; z-index: 10;
+        }
+        .hero-tag { font-family: 'Share Tech Mono'; color: var(--primary); letter-spacing: 4px; font-size: 12px; margin-bottom: 10px; display: block; }
+        .hero-title { 
+            font-weight: 800; font-size: 64px; margin: 0; line-height: 1;
+            background: linear-gradient(to bottom, #fff, #8aa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+        }
+        .hero-desc { 
+            max-width: 600px; margin: 20px auto 0; color: #8faec5; font-size: 18px; line-height: 1.6; font-weight: 500;
+        }
+
+        /* --- 职位卡片 (Role Cards) --- */
+        .roles-container {
+            max-width: 1200px; margin: 0 auto; padding: 40px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;
+            position: relative; z-index: 10;
+        }
+
+        .role-card {
+            background: rgba(15, 20, 30, 0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 30px; position: relative;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; overflow: hidden;
+            backdrop-filter: blur(5px); /* 增加磨砂感 */
+            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+        }
+        
+        .role-card:hover {
+            transform: translateY(-10px);
+            background: rgba(15, 25, 40, 0.8);
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px rgba(0, 243, 255, 0.15);
+        }
+        .role-card:hover .role-icon { color: var(--primary); transform: scale(1.1); text-shadow: 0 0 20px var(--primary); }
+
+        .role-icon { font-size: 40px; color: #456; margin-bottom: 20px; transition: 0.3s; }
+        .role-title { font-weight: 700; font-size: 24px; color: #fff; margin-bottom: 10px; letter-spacing: 1px; }
+        .role-desc { font-size: 15px; color: #8faec5; line-height: 1.5; margin-bottom: 20px; font-weight: 400; }
+        
+        .role-specs { font-family: 'Share Tech Mono'; font-size: 10px; color: var(--secondary); border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; }
+        .spec-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+
+        /* --- 申请表单 (Transmission) --- */
+        .form-section {
+            max-width: 800px; margin: 40px auto 100px; padding: 40px;
+            background: rgba(5, 10, 15, 0.8); border: 1px solid var(--border);
+            position: relative; z-index: 10; backdrop-filter: blur(10px);
+        }
+        .form-header { 
+            display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; 
+            border-bottom: 2px solid var(--primary); padding-bottom: 10px;
+        }
+        .fh-title { font-weight: 700; font-size: 28px; color: #fff; letter-spacing: 2px; }
+        .fh-status { font-family: 'Share Tech Mono'; color: var(--primary); font-size: 12px; animation: blink 1s infinite; }
+
+        .input-group { margin-bottom: 25px; position: relative; }
+        .input-label { 
+            display: block; font-family: 'Share Tech Mono'; font-size: 12px; color: var(--secondary); margin-bottom: 8px; 
+            letter-spacing: 1px;
+        }
+        .ignite-input {
+            width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 15px; 
+            font-family: 'Share Tech Mono', monospace; font-size: 14px;
+            outline: none; transition: 0.3s;
+        }
+        .ignite-input:focus { border-color: var(--primary); background: rgba(0, 243, 255, 0.05); box-shadow: 0 0 15px rgba(0,243,255,0.1); }
+        .ignite-input::placeholder { font-family: 'Rajdhani'; opacity: 0.5; }
+
+        .submit-btn {
+            width: 100%; padding: 18px; 
+            background: var(--primary); border: none; 
+            color: #000; font-family: 'Rajdhani'; font-weight: 800; font-size: 18px; letter-spacing: 3px;
+            cursor: pointer; transition: 0.3s; text-transform: uppercase;
+            clip-path: polygon(15px 0, 100% 0, 100% 100%, 0 100%, 0 15px);
+        }
+        .submit-btn:hover { background: #fff; box-shadow: 0 0 30px rgba(0, 243, 255, 0.5); letter-spacing: 5px; }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 42px; }
+            .roles-container { grid-template-columns: 1fr; padding: 20px; }
+            .form-section { margin: 40px 20px; padding: 25px; }
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <!-- 动态星空背景容器 -->
+    <div id="galaxy-container">
+        <canvas id="starfield"></canvas>
+        <div class="void-overlay"></div>
+        <div class="horizon-glow"></div>
+    </div>
+
+    <nav>
+        <div class="brand">IGNITE <span>//</span> JOIN US</div>
+        <a href="index.html" class="back-btn">◄ RETURN SYSTEM</a>
+    </nav>
+
+    <div class="hero-section">
+        <span class="hero-tag">SYSTEM EXPANSION PROTOCOL</span>
+        <h1 class="hero-title">BUILD THE FUTURE</h1>
+        <p class="hero-desc">
+            We are looking for neural architects, content pioneers, and learning agents. 
+            Join the ecosystem. Ignite your potential.
+        </p>
+    </div>
+
+    <!-- 职位选择 -->
+    <div class="roles-container">
+        <!-- 职位卡片保持不变 -->
+        <div class="role-card" onclick="selectRole(this, 'STUDENT')">
+            <i class="fas fa-user-astronaut role-icon"></i>
+            <div class="role-title">CADET</div>
+            <div class="role-desc">Join as a student. Access high-level calculus modules, utilize the Ignite Calc, and track progress.</div>
+            <div class="role-specs"><div class="spec-item"><span>ACCESS LEVEL:</span> <span>ALPHA</span></div></div>
+        </div>
+
+        <div class="role-card" onclick="selectRole(this, 'INSTRUCTOR')">
+            <i class="fas fa-chalkboard-teacher role-icon"></i>
+            <div class="role-title">ARCHITECT</div>
+            <div class="role-desc">Join as an instructor. Design curriculum modules, track cadet performance, and expand knowledge.</div>
+            <div class="role-specs"><div class="spec-item"><span>ACCESS LEVEL:</span> <span>BETA</span></div></div>
+        </div>
+
+        <div class="role-card" onclick="selectRole(this, 'DEVELOPER')">
+            <i class="fas fa-code role-icon"></i>
+            <div class="role-title">ENGINEER</div>
+            <div class="role-desc">Join the dev team. Maintain the Ecosystem core, optimize algorithms, and build new tools.</div>
+            <div class="role-specs"><div class="spec-item"><span>ACCESS LEVEL:</span> <span>GAMMA</span></div></div>
+        </div>
+    </div>
+
+    <!-- 申请表单 -->
+    <div class="form-section">
+        <div class="form-header">
+            <div class="fh-title">TRANSMISSION LINK</div>
+            <div class="fh-status">● UPLINK READY</div>
+        </div>
+        <div class="input-group">
+            <span class="input-label">CODENAME (NAME)</span>
+            <input type="text" class="ignite-input" placeholder="Enter your designation...">
+        </div>
+        <div class="input-group">
+            <span class="input-label">CONTACT FREQUENCY (EMAIL)</span>
+            <input type="email" class="ignite-input" placeholder="Enter secure frequency...">
+        </div>
+        <div class="input-group">
+            <span class="input-label">SELECTED PROTOCOL (ROLE)</span>
+            <input type="text" class="ignite-input" id="role-input" placeholder="Select a role from above..." readonly style="color:var(--primary); font-weight:bold;">
+        </div>
+        <div class="input-group">
+            <span class="input-label">DATA PACKET (MESSAGE)</span>
+            <textarea class="ignite-input" rows="4" placeholder="Brief us on your capabilities..."></textarea>
+        </div>
+        <button class="submit-btn" onclick="transmit()">INITIALIZE UPLOAD</button>
+    </div>
+
+    <script>
+        // --- 星空背景引擎 (移植自 Index) ---
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let bgStars = [];      
+        let subjectNodes = []; // 依然保留节点逻辑，让背景有连线感，但可以去掉文字
+        
+        // 我们在 Join 页用一些抽象的节点名
+        const subjectsConfig = [
+            { name: "CORE", x: 0.15, y: 0.25 },
+            { name: "LINK", x: 0.85, y: 0.22 },
+            { name: "DATA", x: 0.12, y: 0.75 },
+            { name: "NET", x: 0.88, y: 0.72 },
+            { name: "AI", x: 0.5, y: 0.88 }
+        ];
+
+        const config = { starCount: 90, connDist: 150, baseColor: '210, 240, 255' };
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            initWorld();
+        }
+        
+        function initWorld() {
+            bgStars = [];
+            subjectNodes = [];
+
+            subjectsConfig.forEach(sub => {
+                subjectNodes.push({
+                    text: sub.name,
+                    baseX: sub.x * width, baseY: sub.y * height,
+                    x: sub.x * width, y: sub.y * height,
+                    phase: Math.random() * Math.PI * 2 
+                });
+            });
+
+            for(let i = 0; i < config.starCount; i++) {
+                bgStars.push({
+                    x: Math.random() * width, y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+                    size: Math.random() * 1.5 + 0.5, alpha: Math.random() * 0.6 + 0.2
+                });
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            const time = Date.now() * 0.001;
+
+            ctx.fillStyle = `rgba(${config.baseColor}, 0.7)`;
+            ctx.strokeStyle = `rgba(${config.baseColor}, 0.08)`; 
+            ctx.lineWidth = 0.5;
+
+            bgStars.forEach(star => {
+                star.x += star.vx; star.y += star.vy;
+                if(star.x < 0) star.x = width; if(star.x > width) star.x = 0;
+                if(star.y < 0) star.y = height; if(star.y > height) star.y = 0;
+            });
+
+            // 绘制星星和连线
+            for (let i = 0; i < bgStars.length; i++) {
+                const star = bgStars[i];
+                ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI*2); ctx.fill();
+                for (let j = i + 1; j < bgStars.length; j++) {
+                    const other = bgStars[j];
+                    const dx = star.x - other.x; const dy = star.y - other.y;
+                    if (Math.abs(dx) > config.connDist || Math.abs(dy) > config.connDist) continue;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < config.connDist) {
+                        ctx.beginPath(); ctx.moveTo(star.x, star.y); ctx.lineTo(other.x, other.y); ctx.stroke();
+                    }
+                }
+            }
+
+            // 绘制节点 (简化版，无文字描边，只保留发光点和文字)
+            ctx.textAlign = 'center';
+            subjectNodes.forEach(node => {
+                node.x = node.baseX + Math.sin(time + node.phase) * 12;
+                node.y = node.baseY + Math.cos(time * 0.9 + node.phase) * 12;
+
+                // 节点连线到星星
+                bgStars.forEach(star => {
+                    const dx = node.x - star.x; const dy = node.y - star.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < 180) { 
+                        ctx.beginPath();
+                        const alpha = 1 - dist/180;
+                        ctx.strokeStyle = `rgba(0, 243, 255, ${alpha * 0.25})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.moveTo(node.x, node.y); ctx.lineTo(star.x, star.y); ctx.stroke();
+                    }
+                });
+
+                const pulse = (Math.sin(time * 1.5 + node.phase) + 1) / 2; 
+                const glowSize = 4 + pulse * 6;
+                const gradient = ctx.createRadialGradient(node.x, node.y, 1, node.x, node.y, glowSize);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.3, 'rgba(0, 243, 255, 0.7)'); 
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(node.x, node.y, glowSize, 0, Math.PI*2); ctx.fill();
+            });
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // --- 表单交互逻辑 ---
+        function selectRole(el, role) {
+            document.querySelectorAll('.role-card').forEach(c => {
+                c.style.borderColor = 'rgba(255,255,255,0.05)';
+                c.style.background = 'rgba(15, 20, 30, 0.6)';
+            });
+
+            el.style.borderColor = '#00f3ff';
+            el.style.background = 'rgba(15, 25, 40, 0.9)';
+            
+            const input = document.getElementById('role-input');
+            input.value = `PROTOCOL: ${role}`;
+            
+            document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function transmit() {
+            const btn = document.querySelector('.submit-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "ENCRYPTING & SENDING...";
+            btn.style.background = "#fff";
+            btn.style.color = "#000";
+            
+            setTimeout(() => {
+                btn.innerText = "TRANSMISSION COMPLETE";
+                btn.style.background = "#00ff88"; 
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "var(--primary)";
+                }, 3000);
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
